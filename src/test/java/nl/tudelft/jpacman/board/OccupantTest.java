@@ -2,14 +2,14 @@ package nl.tudelft.jpacman.board;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import nl.tudelft.jpacman.sprite.Sprite;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
  * Test suite to confirm that {@link Unit}s correctly (de)occupy squares.
  *
- * @author Jeroen Roosen 
- *
+ * @author Jeroen Roosen
  */
 class OccupantTest {
 
@@ -31,8 +31,8 @@ class OccupantTest {
      */
     @Test
     void noStartSquare() {
-        // Remove the following placeholder:
-        assertThat(unit).isNotNull();
+        // Assert that the unit starts without occupying any square
+        assertThat(unit.hasSquare()).isFalse();
     }
 
     /**
@@ -41,8 +41,26 @@ class OccupantTest {
      */
     @Test
     void testOccupy() {
-        // Remove the following placeholder:
-        assertThat(unit).isNotNull();
+        // Create an anonymous Square class instance to use for occupation
+        Square s = new Square() {
+            @Override
+            public boolean isAccessibleTo(Unit unit) {
+                return true;
+            }
+
+            @Override
+            public Sprite getSprite() {
+                return null;
+            }
+        };
+
+        // Occupy the square with the unit
+        unit.occupy(s);
+
+        // Assert that the unit is now occupying the square
+        assertThat(unit.hasSquare()).isTrue();
+        assertThat(unit.getSquare()).isEqualTo(s);
+        assertThat(s.getOccupants()).contains(unit);
     }
 
     /**
@@ -51,7 +69,44 @@ class OccupantTest {
      */
     @Test
     void testReoccupy() {
-        // Remove the following placeholder:
-        assertThat(unit).isNotNull();
+        // Create two anonymous Square class instances
+        Square first = new Square() {
+            @Override
+            public boolean isAccessibleTo(Unit unit) {
+                return true;
+            }
+
+            @Override
+            public Sprite getSprite() {
+                return null;
+            }
+        };
+
+        Square second = new Square() {
+            @Override
+            public boolean isAccessibleTo(Unit unit) {
+                return true;
+            }
+
+            @Override
+            public Sprite getSprite() {
+                return null;
+            }
+        };
+
+        //Occupy the first square
+        unit.occupy(first);
+        // Assert that the unit is occupying the first square
+        assertThat(unit.getSquare()).isEqualTo(first);
+        assertThat(first.getOccupants()).contains(unit);
+
+        // Now occupy the second square
+        unit.occupy(second);
+        // Assert that the unit has moved to the second square
+        assertThat(unit.getSquare()).isEqualTo(second);
+        assertThat(second.getOccupants()).contains(unit);
+
+        // Assert that the first square no longer contains the unit
+        assertThat(first.getOccupants()).doesNotContain(unit);
     }
 }
