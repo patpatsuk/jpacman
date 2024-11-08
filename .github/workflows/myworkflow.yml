@@ -19,25 +19,28 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: gradle
+
+    # Update Gradle Wrapper version
+    - name: Update Gradle Wrapper
+      run: |
+        wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
+        unzip -d /opt gradle-7.6-bin.zip
+        ln -s /opt/gradle-7.6/bin/gradle /usr/local/bin/gradle
+        rm gradle-7.6-bin.zip
     
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: 7.6
-    
-    - name: Clear Gradle caches
+    - name: Update Gradle Wrapper Version
       run: |
-        rm -rf ~/.gradle/caches/
-        ./gradlew clean --no-daemon
-    
+        ./gradlew wrapper --gradle-version 7.6 --distribution-type bin
+        ./gradlew --version
+
     - name: Build with Gradle
       run: |
         export DISPLAY=:99
         sudo Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        ./gradlew build --no-daemon
+        ./gradlew clean build --no-daemon --info
 
   dependency-submission:
     runs-on: ubuntu-latest
