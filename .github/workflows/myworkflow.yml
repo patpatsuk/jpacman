@@ -2,47 +2,54 @@ name: JPacman CI with Gradle
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
     - name: Set up JDK 11
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
         java-version: '11'
-        distribution: 'adopt'
-        cache: gradle  # Enable caching for Gradle dependencies
-
-    # Grant execute permission for gradlew
+        distribution: 'temurin'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-
-    # Build with Gradle Wrapper and add AWT support
     - name: Build with Gradle
       run: xvfb-run ./gradlew build
 
-  dependency-submission:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 11
-      uses: actions/setup-java@v2
+    # Generate JaCoCo coverage badge
+    - name: Generate JaCoCo Badge
+      uses: cicirello/jacoco-badge-generator@v2
       with:
-        java-version: '11'
-        distribution: 'adopt'
-        cache: gradle  # Enable caching for Gradle dependencies
+        badges-directory: .github/badges
+        generate-coverage-badge: true
+        coverage-badge-filename: jacoco.svg
+        generate-branches-badge: true
+        branches-badge-filename: branches.svg
+        jacoco-csv-file: build/reports/jacoco/test/jacocoTestReport.csv
 
-    # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
-    - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+    # Check if badges were created successfully
+    - name: Check badge creation
+      run: ls -l .github/badges
+
+    # Commit the badges to the repository
+    - name: Commit changes
+      uses: EndBug/add-and-commit@v9
+      with:
+        default_author: github_actions
+        message: 'Updated JaCoCo badges'
+        add: '.github/badges/*.svg'
+      
+    # Display JaCoCo test results in the logs
+    - name: Show test results
+      run: cat build/reports/jacoco/test/jacocoTestReport.csv
