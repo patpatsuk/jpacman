@@ -2,54 +2,47 @@ name: JPacman CI with Gradle
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
-
-permissions:
-  contents: write
-  packages: write
+    branches: [ "master" ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up JDK 11
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4  # Update to a newer version to avoid Node.js 12
       with:
         java-version: '11'
-        distribution: 'temurin'
+        distribution: 'adopt'
+        cache: gradle
+
+    # Grant execute permission for gradlew
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+
+    # Build with Gradle Wrapper and add AWT support
     - name: Build with Gradle
       run: xvfb-run ./gradlew build
 
-    # Generate JaCoCo coverage badge
-    - name: Generate JaCoCo Badge
-      uses: cicirello/jacoco-badge-generator@v2
-      with:
-        badges-directory: .github/badges
-        generate-coverage-badge: true
-        coverage-badge-filename: jacoco.svg
-        generate-branches-badge: true
-        branches-badge-filename: branches.svg
-        jacoco-csv-file: build/reports/jacoco/test/jacocoTestReport.csv
+  dependency-submission:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-    # Check if badges were created successfully
-    - name: Check badge creation
-      run: ls -l .github/badges
-
-    # Commit the badges to the repository
-    - name: Commit changes
-      uses: EndBug/add-and-commit@v9
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4  # Update to a newer version to avoid Node.js 12
       with:
-        default_author: github_actions
-        message: 'Updated JaCoCo badges'
-        add: '.github/badges/*.svg'
-      
-    # Display JaCoCo test results in the logs
-    - name: Show test results
-      run: cat build/reports/jacoco/test/jacocoTestReport.csv
+        java-version: '11'
+        distribution: 'adopt'
+        cache: gradle
+
+    # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
+    - name: Generate and submit dependency graph
+      uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
